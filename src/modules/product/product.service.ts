@@ -4,6 +4,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { Repository } from 'typeorm';
+import { PaginationDto } from './dto/pagination.dto';
 
 @Injectable()
 export class ProductService {
@@ -14,21 +15,45 @@ export class ProductService {
   async create(createProductDto: CreateProductDto) {
     try {
       let product = await this.productRepository.save(createProductDto)
+      if (!product) {
+        throw new Error('Error')
+      }
+      let newProductDetail = await this.productRepository.findOne({
+        where: {
+          id: product.id
+        },
+        relations: {
+          productOption: true
+        }
+      })
+      if (!newProductDetail) {
+        throw new HttpException(`Product not found`, HttpStatus.NOT_FOUND);
+      }
       return {
         message: "success",
         data: product
       }
     } catch (err) {
+      console.log("ProductService ~ create ~ err:", err)
       throw new HttpException('loi model', HttpStatus.BAD_REQUEST)
     }
   }
 
-  async findAll() {
+  async findAll(pagination: PaginationDto) {
     try {
-      let products = await this.productRepository.find()
+      let products = await this.productRepository.find({
+        relations: {
+          productOption: true
+        },
+        skip: pagination.skip,
+        take: pagination.take
+      })
+      let countItem = (await this.productRepository.find()).length;
+      let maxPage = Math.ceil(countItem / pagination.take);
       return {
         message: "get product success",
-        data: products
+        data: products,
+        maxPage
       }
     } catch (err) {
       throw new HttpException('loi model', HttpStatus.BAD_REQUEST)
@@ -37,7 +62,12 @@ export class ProductService {
 
   async findOne(id: string) {
     try {
-      let product = await this.productRepository.findOne({ where: { id } })
+      let product = await this.productRepository.findOne({
+        where: { id },
+        relations: {
+          productOption: true
+        }
+      })
       return {
         message: "get product success",
         data: product

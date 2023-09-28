@@ -14,6 +14,9 @@ export class CustomerChatService {
                 where: {
                     replyToId: null,
                     userId
+                },
+                relations: {
+                    user: true
                 }
             })
             if (chats.length == 0) {
@@ -36,6 +39,9 @@ export class CustomerChatService {
                 where: {
                     replyToId: null,
                     userId: chatRecord.userId
+                },
+                relations: {
+                    user: true
                 }
             })
 

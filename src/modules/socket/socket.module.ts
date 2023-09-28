@@ -5,12 +5,13 @@ import { CustomerChatService } from "./customers/customer.chat.service";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { CustomerChats } from "./customers/entities/customer.chat.entity";
 import { JwtService } from "src/utils/jwt";
+import { UserSocketGateway } from "./users/user.socket";
 
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([CustomerChats])
     ],
-    providers: [DiscordBotSocket, CustomerChatSocket, CustomerChatService, JwtService]
+    providers: [DiscordBotSocket, CustomerChatSocket, CustomerChatService, JwtService, UserSocketGateway]
 })
 export class SocketModule { }

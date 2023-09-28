@@ -4,13 +4,13 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // thay config thành config của bạn
 const firebaseConfig = {
-    apiKey: "AIzaSyD5fTYk0UZhKaq3I-u7ZC_vu9vEbeZDu6k",
-    authDomain: "md5lancome.firebaseapp.com",
-    projectId: "md5lancome",
-    storageBucket: "md5lancome.appspot.com",
-    messagingSenderId: "29404745073",
-    appId: "1:29404745073:web:fa5a346df9c8e27d91bad0",
-    measurementId: "G-QGDNG7YDCS"
+    apiKey: "AIzaSyB_AARpq4JC8whGk51oWfCLLgTOfKjBdjo",
+    authDomain: "md5lancome-53ee0.firebaseapp.com",
+    projectId: "md5lancome-53ee0",
+    storageBucket: "md5lancome-53ee0.appspot.com",
+    messagingSenderId: "634280478032",
+    appId: "1:634280478032:web:fc48e9153c33207b8b1855",
+    measurementId: "G-Y2FEJ9KYMF"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -26,10 +26,10 @@ export async function uploadFileToStorage(file: any, folderName: any, bufferData
     let metadata;
     if (!bufferData) {
         // tên file trên file base
-        fileRef = ref(storage, `${folderName}/` + file.name);
+        fileRef = ref(storage, `${folderName}/` + file.originalname);
     } else {
         // tên file trên file base
-        fileRef = ref(storage, `${folderName}/` + (file as any).filename);
+        fileRef = ref(storage, `${folderName}/` + file.originalname);
         metadata = {
             contentType: (file as any).mimetype,
         };

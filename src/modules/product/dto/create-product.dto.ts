@@ -7,6 +7,15 @@ export class CreateProductDto {
     @Allow()
     des: string
 
+    @Allow()
+    type: string
+
+    @Allow()
+    categoryId: string
+
+    @Allow()
+    avatar: string
+
     // @Allow()
     // price: string
 }

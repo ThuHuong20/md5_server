@@ -1,20 +1,37 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, Res, HttpException } from '@nestjs/common';
 import { ProductOptionService } from './product-option.service';
 import { CreateProductOptionDto } from './dto/create-product-option.dto';
 import { UpdateProductOptionDto } from './dto/update-product-option.dto';
+import { Response } from 'express'
 
 @Controller('product-option')
 export class ProductOptionController {
-  constructor(private readonly productOptionService: ProductOptionService) {}
+  constructor(private readonly productOptionService: ProductOptionService) { }
 
   @Post()
-  create(@Body() createProductOptionDto: CreateProductOptionDto) {
-    return this.productOptionService.create(createProductOptionDto);
+  async create(@Body() createProductOptionDto: CreateProductOptionDto, @Res() res: Response) {
+    try {
+      let [status, message, data] = await this.productOptionService.create(createProductOptionDto);
+      return res.status(status ? 200 : 213).json({
+        message,
+        data
+      })
+    } catch (err) {
+      return res.status(500).json({
+        message: "Controller lỗi!"
+      })
+    }
   }
 
   @Get()
-  findAll() {
-    return this.productOptionService.findAll();
+  async findAll(@Res() res: Response) {
+    try {
+      let serviceRes = await this.productOptionService.findAll()
+      // res.statusMessage = serviceRes.message
+      res.status(serviceRes.data ? HttpStatus.OK : HttpStatus.ACCEPTED).json(serviceRes)
+    } catch (err) {
+      throw new HttpException('loi controller', HttpStatus.BAD_REQUEST)
+    }
   }
 
   @Get(':id')

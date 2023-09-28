@@ -19,7 +19,7 @@ export class UsersService {
       return {
         status: true,
         data: results,
-        message: 'Sign success'
+        message: 'Sign up successfully'
       }
     } catch (err) {
       return {

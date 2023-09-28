@@ -4,7 +4,6 @@ import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "ty
 
 @Entity()
 export class Product {
-    [x: string]: any;
     @PrimaryGeneratedColumn('uuid')
     id: string;
     @Column("varchar", {
@@ -14,9 +13,15 @@ export class Product {
     name: string;
 
     @Column("varchar", {
-        length: 50
+        length: 250
     })
     des: string;
+
+
+    @Column("varchar", {
+        length: 50
+    })
+    type: string;
 
     // @Column("varchar", {
     //     length: 50
@@ -24,13 +29,16 @@ export class Product {
     // price: string
 
     @Column({ default: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTGYVzWTuDXyCf02RIHia-_X-mnkW_476LQjyc9tZfpOg&s" })
-    url: string
+    avatar: string
 
     @Column({ default: false })
     active: Boolean;
 
     @Column({ nullable: false })
-    productId: string
+    categoryId: String;
+
+    // @Column({ nullable: false })
+    // productId: string
 
     @ManyToOne(() => Category, (category) => category.products)
     category: Category

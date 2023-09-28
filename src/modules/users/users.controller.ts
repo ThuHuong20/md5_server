@@ -229,6 +229,7 @@ export class UsersController {
         });
       }
     } catch (err) {
+      console.log("resetPassword ~ err:", err)
       return res.status(500).json({
         message: "Server Controller Error!"
       });

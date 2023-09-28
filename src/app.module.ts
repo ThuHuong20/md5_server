@@ -13,6 +13,8 @@ import { UploadModule } from './modules/upload/upload.module';
 import { UserAddressesModule } from './modules/user-addresses/user-addresses.module';
 import { ProductOptionModule } from './modules/product-option/product-option.module';
 import { SocketModule } from './modules/socket/socket.module';
+import { ReceiptModule } from './modules/receipt/receipt.module';
+import { ReceiptDetailModule } from './modules/receipt-detail/receipt-detail.module';
 
 
 @Module({
@@ -35,7 +37,9 @@ import { SocketModule } from './modules/socket/socket.module';
     UploadModule,
     UserAddressesModule,
     ProductOptionModule,
-    SocketModule
+    SocketModule,
+    ReceiptModule,
+    ReceiptDetailModule
 
   ],
   controllers: [AppController],

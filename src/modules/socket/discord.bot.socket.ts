@@ -7,7 +7,7 @@ export class DiscordBotSocket implements OnModuleInit {
     /* thuộc tính client được ép kiểu theo class Client của discord */
     client: Client;
     /* Token dùng để connect tới bot */
-    botToken: string = "MTE1Mzk4ODU0NzIyMTY2MzgxNA.GHrHQy.7OGPAZJKYqRGJbEw4OZjFq6gcrfiRaBQcALM3M";
+    botToken: string = "";
     /* ID của kênh discord muốn làm việc */
     guildId: string = "1153989697480175697"
     /* Khai báo ra thuộc tính guild được ép kiểu theo Class Guild của discord*/

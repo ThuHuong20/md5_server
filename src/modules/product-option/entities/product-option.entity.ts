@@ -6,22 +6,27 @@ import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 @Entity()
 export class ProductOption {
 
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
-    // @Column("varchar", {
-    //     unique: true,
-    //     length: 50
-    // })
-    // name: string;
+    @PrimaryGeneratedColumn()
+    id: number;
+
 
     @Column("varchar", {
         length: 50
     })
     price: string
 
+    @Column("varchar", {
+        length: 50
+    })
+    option: string
 
-    // @Column({ nullable: false })
-    // categoryId: string
+    @Column({
+        default: false
+    })
+    status: boolean;
+
+    @Column({ nullable: false })
+    productId: string
 
     @ManyToOne(() => Product, (product) => product.productOption)
     product: Product

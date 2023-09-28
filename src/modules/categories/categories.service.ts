@@ -25,7 +25,11 @@ export class CategoriesService {
 
   async findAll() {
     try {
-      let category = await this.categoryRepository.find()
+      let category = await this.categoryRepository.find({
+        relations: {
+          products: true
+        }
+      })
       return {
         message: "find categories success",
         data: category
@@ -37,7 +41,14 @@ export class CategoriesService {
 
   async findOne(id: number) {
     try {
-      let categoryId = await this.categoryRepository.find({ where: { id } })
+      let categoryId = await this.categoryRepository.findOne({
+        where: { id },
+        relations: {
+          products: {
+            productOption: true
+          }
+        }
+      })
       return {
         message: "find categoryId success",
         data: categoryId
