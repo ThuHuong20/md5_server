@@ -14,7 +14,7 @@ import { UserAddressesModule } from './modules/user-addresses/user-addresses.mod
 import { ProductOptionModule } from './modules/product-option/product-option.module';
 import { SocketModule } from './modules/socket/socket.module';
 import { ReceiptModule } from './modules/receipt/receipt.module';
-import { ReceiptDetailModule } from './modules/receipt-detail/receipt-detail.module';
+
 
 
 @Module({
@@ -39,7 +39,7 @@ import { ReceiptDetailModule } from './modules/receipt-detail/receipt-detail.mod
     ProductOptionModule,
     SocketModule,
     ReceiptModule,
-    ReceiptDetailModule
+
 
   ],
   controllers: [AppController],

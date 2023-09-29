@@ -34,14 +34,14 @@ export class UserSocketGateway implements OnModuleInit {
                 })
                 socket.disconnect();
             } else {
-                if (this.clients.find(client => client.user.id == user.id)) {
-                    socket.emit("connectStatus", {
-                        message: "Signed in on another device!",
-                        status: true
-                    })
-                    socket.disconnect()
-                    return
-                }
+                // if (this.clients.find(client => client.user.id == user.id)) {
+                //     socket.emit("connectStatus", {
+                //         message: "Signed in on another device!",
+                //         status: true
+                //     })
+                //     socket.disconnect()
+                //     return
+                // }
                 /* luu tru thong tin nguoi dung vua ket noi de tuong tac ve sau */
                 this.clients.push({
                     socket,

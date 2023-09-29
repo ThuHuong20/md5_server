@@ -1,7 +1,8 @@
 
 import { Category } from "src/modules/categories/entities/category.entity";
 import { Product } from "src/modules/product/entities/product.entity";
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { ReceiptDetail } from "src/modules/receipt/entities/receipt-detail.entity";
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class ProductOption {
@@ -30,5 +31,8 @@ export class ProductOption {
 
     @ManyToOne(() => Product, (product) => product.productOption)
     product: Product
+
+    @OneToMany(() => ReceiptDetail, (receiptDetail) => receiptDetail.option)
+    sold: ReceiptDetail[];
 
 }

@@ -3,6 +3,8 @@ import * as  bcrypt from 'bcrypt'
 import { UserRole, UserStatus } from "../users.enum";
 import { UserAddresses } from "src/modules/user-addresses/entities/user-address.entity";
 import { CustomerChats } from "src/modules/socket/customers/entities/customer.chat.entity";
+import { Receipt } from "src/modules/receipt/entities/receipt.entity";
+import { Guest } from "src/modules/guest/entities/guest.entity";
 
 @Entity()
 export class User {
@@ -63,4 +65,9 @@ export class User {
 
     @OneToMany(() => UserAddresses, (userAddresses) => userAddresses.user)
     userAddresses: UserAddresses[];
+
+    @OneToMany(() => Receipt, (receipt) => receipt.user)
+    receipts: Receipt[];
+
+
 }
