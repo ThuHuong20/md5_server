@@ -14,8 +14,7 @@ export class ProductController {
   @Post()
   @UseInterceptors(FileInterceptor('avatar'))
   async create(@Body() createProductDto: CreateProductDto, @Res() res: Response, @Body() body: any, @UploadedFile() file: Express.Multer.File, @Req() req: Request) {
-    console.log("🚀 ~ file: product.controller.ts:17 ~ ProductController ~ create ~ file:", file)
-    console.log("🚀 ~ file: product.controller.ts:17 ~ ProductController ~ create ~ body:", body)
+
     const data = JSON.parse(body.products)
     // const data = req.body;
     let avatar = await uploadFileToStorage(file, "products", file.buffer)

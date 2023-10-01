@@ -18,12 +18,12 @@ export class Receipt {
     id: string;
 
     @Column({
-        nullable: false,
+        nullable: true,
     })
     userId: string;
 
     @Column({
-        nullable: false,
+        nullable: true,
     })
     guestId: string
 
@@ -50,20 +50,26 @@ export class Receipt {
     @Column()
     createAt: string; // thoi gian tao down
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     accepted: string; //shop xac nhan down hang
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     shipAt: string; // thoi gian van chuyen
 
-    @Column()
-    done: string; // khach nhan dc down hang
+    @Column({
+        nullable: true
+    })
+    doneAt: string; // khach nhan dc down hang
+
+    @OneToMany(() => ReceiptDetail, (receiptDetail) => receiptDetail.receipt)
+    detail: ReceiptDetail[];
 
     @BeforeInsert()
     hanldeSetCreateAt() {
         this.createAt = String(Date.now());
     }
-
-    @OneToMany(() => ReceiptDetail, (receiptDetail) => receiptDetail.receipt)
-    detail: ReceiptDetail[];
 }
