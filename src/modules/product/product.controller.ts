@@ -48,6 +48,18 @@ export class ProductController {
     }
   }
 
+  @Get('search')
+  async search(@Res() res: Response, @Query('q') q: string) {
+    try {
+      if (q != undefined) {
+        return res.status(HttpStatus.OK).json(await this.productService.searchByName(q))
+      }
+    } catch (err) {
+      console.log("err2222", err)
+      throw new HttpException('Loi Controller', HttpStatus.BAD_REQUEST);
+    }
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string, @Res() res: Response) {
     try {

@@ -1,11 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Res, HttpStatus, HttpException } from '@nestjs/common';
 import { ReceiptService } from './receipt.service';
 import { CreateReceiptDto } from './dto/create-receipt.dto';
 import { UpdateReceiptDto } from './dto/update-receipt.dto';
-
+import { Response } from 'express';
 @Controller('receipt')
 export class ReceiptController {
-  constructor(private readonly receiptService: ReceiptService) {}
+  constructor(private readonly receiptService: ReceiptService) { }
 
   @Post()
   create(@Body() createReceiptDto: CreateReceiptDto) {
@@ -13,8 +13,14 @@ export class ReceiptController {
   }
 
   @Get()
-  findAll() {
-    return this.receiptService.findAll();
+  async findAll(@Res() res: Response) {
+    try {
+      let serviceRes = await this.receiptService.findAll()
+      // res.statusMessage = serviceRes.message
+      res.status(serviceRes.data ? HttpStatus.OK : HttpStatus.ACCEPTED).json(serviceRes)
+    } catch (err) {
+      throw new HttpException('loi controller', HttpStatus.BAD_REQUEST)
+    }
   }
 
   @Get(':id')

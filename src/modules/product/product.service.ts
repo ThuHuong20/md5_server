@@ -3,7 +3,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { PaginationDto } from './dto/pagination.dto';
 
 @Injectable()
@@ -113,6 +113,27 @@ export class ProductService {
       }
     } catch (err) {
       throw new HttpException('loi model', HttpStatus.BAD_REQUEST)
+    }
+  }
+
+  async searchByName(name: string) {
+    try {
+      let products = await this.productRepository.find({
+        where: {
+          name: ILike(`%${name}%`),
+        },
+        relations: {
+          productOption: true
+        }
+      }
+      );
+      return {
+        data: products,
+        message: "Get products successfully"
+      }
+    } catch (err) {
+      console.log("err111111:", err)
+      throw new HttpException('Loi Model', HttpStatus.BAD_REQUEST);
     }
   }
 }
