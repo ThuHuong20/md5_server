@@ -5,10 +5,14 @@ import { Client } from "discord.js";
 import { type } from "os";
 import { Server, Socket } from 'socket.io'
 import { ReceiptDetail } from "src/modules/receipt/entities/receipt-detail.entity";
-import { Receipt, ReceiptStatus } from "src/modules/receipt/entities/receipt.entity";
+import { PayMode, Receipt, ReceiptStatus } from "src/modules/receipt/entities/receipt.entity";
 import { User } from "src/modules/users/entities/user.entity";
 import { JwtService } from "src/utils/jwt";
 import { Not, Repository } from "typeorm";
+import * as moment from "moment";
+import * as CryptoJS from "crypto-js";
+import axios from "axios";
+import * as qs from "qs";
 interface ClientType {
     user: User,
     socket: Socket
@@ -94,12 +98,13 @@ export class UserSocketGateway implements OnModuleInit {
                     receiptId: string,
                     userId: string
                 }) => {
-                    console.log("data", data);
-                    let cashInfor = await this.cash(data.receiptId, data.userId)
+                    let cashInfor = await this.cash(data.receiptId, data.userId, {
+                        payMode: PayMode.CASH
+                    })
                     if (cashInfor) {
                         for (let i in this.clients) {
                             if (this.clients[i].user.id == user.id) {
-                                this.clients[i].socket.emit("receiveCash", cashInfor[0])
+                                this.clients[i].socket.emit("receiveCart", cashInfor[0])
                                 this.clients[i].socket.emit("receiveReceipt", cashInfor[1])
                                 this.clients[i].socket.emit("cash-status", true)
                             }
@@ -107,6 +112,20 @@ export class UserSocketGateway implements OnModuleInit {
                     }
                 })
 
+                socket.on("payZalo", async (data: {
+                    receiptId: string
+                }) => {
+                    let zaloCash = await this.zaloCash(data.receiptId, user, socket);
+                    if (zaloCash) {
+                        for (let i in this.clients) {
+                            if (this.clients[i].user.id == user.id) {
+                                this.clients[i].socket.emit("receiveCart", zaloCash[0])
+                                this.clients[i].socket.emit("receiveReceipt", zaloCash[1])
+                                this.clients[i].socket.emit("cash-status", true)
+                            }
+                        }
+                    }
+                })
 
                 socket.on("deleteItemFromCart", async (newItem: { receiptId: string, optionId: string }) => {
                     let cart = await this.deleteItemFromCart(newItem);
@@ -247,23 +266,42 @@ export class UserSocketGateway implements OnModuleInit {
         }
     }
 
-    async cash(receiptId: string, userId: string) {
+    async cash(receiptId: string, userId: string, options: {
+        payMode: PayMode,
+        paid?: boolean,
+        paidAt?: string,
+        zaloTranId?: string
+    } | null = null): Promise<[Receipt, Receipt[]] | null> {
         try {
             let nowCart = await this.receipts.findOne({
                 where: {
                     id: receiptId
+                },
+                relations: {
+                    detail: {
+                        option: {
+                            product: {
+                                productOption: true
+                            }
+                        }
+                    }
                 }
             })
-            if (!nowCart) return false
+            if (!nowCart) return null
             let cartUpdate = this.receipts.merge(nowCart, {
-                status: ReceiptStatus.PENDING
+                status: ReceiptStatus.PENDING,
+                total: nowCart.detail?.reduce((value, cur: any) => {
+                    return value += cur.quantity * cur.option.price
+                }, 0),
+                ...options
             })
             let cartResult = await this.receipts.save(cartUpdate);
-            if (!cartResult) return false
+            if (!cartResult) return null
 
-            // tao cart moiw
+            // Tạo Cart Mới
             let newCart = await this.getCartByUserId(userId);
-            if (!newCart) return false
+            if (!newCart) return null
+
             let receipts = await this.receipts.find({
                 where: {
                     userId,
@@ -279,12 +317,153 @@ export class UserSocketGateway implements OnModuleInit {
                     }
                 }
             })
-            if (!receipts) return false
-            return [newCart, receipts]
+            if (!receipts) return null
 
+            return [newCart, receipts]
         } catch (err) {
-            return false
+            return null
         }
+    }
+
+    async zaloCash(receiptId: string, user: User, socket: Socket) {
+        let finish: boolean = false;
+        let result: [Receipt, Receipt[]] | null = null;
+        /* Bước 1: Lấy dữ liệu dơn hàng và đăng ký giao dịch trên Zalo*/
+        let nowCart = await this.receipts.findOne({
+            where: {
+                id: receiptId
+            },
+            relations: {
+                detail: {
+                    option: {
+                        product: {
+                            productOption: true
+                        }
+                    }
+                }
+            }
+        })
+        if (!nowCart) return false
+
+        let zaloRes = await this.zaloCreateReceipt(user, nowCart);
+
+        if (!zaloRes) return false
+        /* Bước 2: Gửi thông tin thanh toán về cho client*/
+        socket.emit("payQr", zaloRes.payUrl)
+        /* Bước 3: Kiểm tra thanh toán*/
+        let payInterval: NodeJS.Timeout | null = null;
+
+        /* Sau bao lâu thì hủy giao dịch! */
+        setTimeout(() => {
+            socket.emit("payQr", null)
+            clearInterval(payInterval)
+            finish = true;
+        }, 1000 * 60 * 2)
+
+        setInterval(async () => {
+            let payStatus = await this.zaloCheckPaid(zaloRes.orderId)
+            if (payStatus) {
+                result = await this.cash(receiptId, user.id, {
+                    paid: true,
+                    paidAt: String(Date.now()),
+                    payMode: PayMode.ZALO,
+                    zaloTranId: zaloRes.orderId
+                })
+                finish = true;
+                return
+            }
+        }, 1000)
+
+        return new Promise((resolve, reject) => {
+            setInterval(() => {
+                if (finish) {
+                    resolve(result)
+                }
+            }, 1000)
+        })
+    }
+
+    async zaloCreateReceipt(user: User, receipt: Receipt) {
+        let result: {
+            payUrl: string;
+            orderId: string;
+        } | null = null;
+        const config = {
+            appid: process.env.ZALO_APPID,
+            key1: process.env.ZALO_KEY1,
+            key2: process.env.ZALO_KEY2,
+            create: process.env.ZALO_CREATE_URL,
+            confirm: process.env.ZALO_COFIRM_URL,
+        };
+
+        const orderInfo = {
+            appid: config.appid,
+            apptransid: `${moment().format('YYMMDD')}_${Date.now() * Math.random()}_${receipt.id}`,
+            appuser: user.userName,
+            apptime: Date.now(),
+            item: JSON.stringify([]),
+            embeddata: JSON.stringify({
+                merchantinfo: "lancome Store" // key require merchantinfo
+            }),
+            amount: Number(receipt.detail?.reduce((value, cur: any) => {
+                return value += cur.quantity * cur.option.price
+            }, 0)),
+            description: "Thanh Toán Cho Shop lancome",
+            bankcode: "zalopayapp",
+            mac: ""
+        };
+
+        const data = config.appid + "|" + orderInfo.apptransid + "|" + orderInfo.appuser + "|" + orderInfo.amount + "|" + orderInfo.apptime + "|" + orderInfo.embeddata + "|" + orderInfo.item;
+        orderInfo.mac = CryptoJS.HmacSHA256(data, String(config.key1)).toString();
+
+        await axios.post(String(config.create), null, { params: orderInfo })
+            .then(zaloRes => {
+                if (zaloRes.data.returncode == 1) {
+                    result = {
+                        payUrl: zaloRes.data.orderurl,
+                        orderId: orderInfo.apptransid
+                    }
+                }
+            })
+        return result
+    }
+
+    async zaloCheckPaid(zaloTransid: string) {
+        const config = {
+            appid: process.env.ZALO_APPID,
+            key1: process.env.ZALO_KEY1,
+            key2: process.env.ZALO_KEY2,
+            create: process.env.ZALO_CREATE_URL,
+            confirm: process.env.ZALO_COFIRM_URL,
+        };
+
+        let postData = {
+            appid: config.appid,
+            apptransid: zaloTransid,
+            mac: ""
+        }
+
+        let data = config.appid + "|" + postData.apptransid + "|" + config.key1; // appid|apptransid|key1
+        postData.mac = CryptoJS.HmacSHA256(data, String(config.key1)).toString();
+
+
+        let postConfig = {
+            method: 'post',
+            url: String(config.confirm),
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            data: String(qs.stringify(postData))
+        };
+
+        return await axios.post(postConfig.url, postConfig.data)
+            .then(function (resZalo) {
+                if (resZalo.data.returncode == 1) return true
+                return false
+            })
+            .catch(function (error) {
+                return false
+            });
     }
 
     async deleteItemFromCart(newItem: { receiptId: string, optionId: string }) {

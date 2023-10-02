@@ -9,10 +9,55 @@ import { JwtService } from 'src/utils/jwt';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import common from 'src/utils/common';
+import { GoogleLoginDto } from './dto/google-login.dto';
+import axios from 'axios';
+
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService, private readonly mail: MailService, private readonly jwt: JwtService) { }
 
+
+  @Post('google-login')
+  async googleLogin(@Body() googleLoginDto: GoogleLoginDto, @Req() req: Request, @Res() res: Response) {
+    try {
+      await axios.post("https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=AIzaSyB_AARpq4JC8whGk51oWfCLLgTOfKjBdjo", {
+        idToken: googleLoginDto.accessToken
+      })
+      let userExist = await this.usersService.findByUserName(googleLoginDto.email);
+      if (userExist.status) {
+        // đã có tài khoản liên kết gmail này
+        let token = this.jwt.createToken(userExist.data, "1d");
+        return res.status(200).json({
+          token
+        })
+      } else {
+        /* Đăng ký */
+        let newUserRes = await this.usersService.create({
+          email: googleLoginDto.email,
+          userName: googleLoginDto.userName,
+          password: googleLoginDto.password,
+        })
+
+        console.log(" newUserRes", newUserRes);
+
+
+        if (newUserRes.status) {
+          let token = this.jwt.createToken(newUserRes.data, "1d");
+          return res.status(200).json({
+            token
+          })
+        }
+
+        return res.status(213).json({
+          message: "Đăng nhập với google thất bại!"
+        })
+      }
+    } catch {
+      return res.status(500).json({
+        message: "Lỗi controller"
+      })
+    }
+  }
 
   @Post('login')
   async login(@Body() loginDto: LoginDto, @Res() res: Response) {

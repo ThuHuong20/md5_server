@@ -14,9 +14,9 @@ export class User {
     @Column({ default: "https://png.pngtree.com/png-clipart/20210608/ourmid/pngtree-gray-silhouette-avatar-png-image_3418406.jpg" })
     avatar: string;
 
-    @Column({
+    @Column("varchar", {
         unique: true,
-        length: 20
+        length: 70
     })
     userName: string;
 

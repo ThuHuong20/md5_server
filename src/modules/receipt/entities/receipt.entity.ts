@@ -11,6 +11,10 @@ export enum ReceiptStatus {
     DONE = "DONE"
 }
 
+export enum PayMode {
+    CASH = "CASH",
+    ZALO = "ZALO"
+}
 
 @Entity()
 export class Receipt {
@@ -46,6 +50,29 @@ export class Receipt {
         default: ReceiptStatus.SHOPPING
     })
     status: ReceiptStatus;
+
+
+    @Column({
+        default: false
+    })
+    paid: boolean
+
+    @Column({
+        type: "enum",
+        enum: PayMode,
+        default: PayMode.CASH
+    })
+    payMode: PayMode
+
+    @Column({
+        nullable: true
+    })
+    paidAt: string
+
+    @Column({
+        nullable: true
+    })
+    zaloTranId: string
 
     @Column()
     createAt: string; // thoi gian tao down

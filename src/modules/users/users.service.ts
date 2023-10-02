@@ -11,6 +11,24 @@ import validation from 'src/utils/validation';
 export class UsersService {
   constructor(@InjectRepository(User) private users: Repository<User>) { }
 
+  async create(createUserDto: CreateUserDto) {
+    try {
+      let newUser = this.users.create(createUserDto)
+      let results = await this.users.save(newUser);
+      return {
+        status: true,
+        message: "Create user successfully",
+        data: newUser
+      };
+    } catch (err) {
+      return {
+        status: false,
+        message: err.sqlMessage,
+        data: null
+      }
+    }
+  }
+
   async register(createUserDto: CreateUserDto): Promise<RegisterSerRes> {
     try {
       let newUser = this.users.create(createUserDto);
@@ -106,6 +124,32 @@ export class UsersService {
         status: false,
         data: null,
         message: "Lỗi model3"
+      }
+    }
+  }
+
+  async findByUserName(userName: string): Promise<FindByIdSerRes> {
+    try {
+      let result = await this.users.findOne({
+        where: {
+          userName
+        }
+      });
+
+      if (!result) {
+        throw new Error
+      }
+
+      return {
+        status: true,
+        data: result,
+        message: "Find user ok!"
+      }
+    } catch (err) {
+      return {
+        status: false,
+        data: null,
+        message: "Lỗi model"
       }
     }
   }

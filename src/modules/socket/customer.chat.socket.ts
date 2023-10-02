@@ -70,7 +70,7 @@ export class CustomerChatSocket implements OnModuleInit {
                         discordChannelId: newClient.discordChannelId,
                         time: String(Date.now()),
                         userId: user.id,
-                        adminId: "46157d2e-d3ad-4238-b73a-82e655593320" // tạm thời fix cứng
+                        adminId: "e3cb7bb7-5f80-4ded-b82b-a07ea43a65b0" // tạm thời fix cứng
                     }
                     let newChatHisotry = await this.customerChatService.createChat(chat)
                     if (newChatHisotry) {
@@ -101,7 +101,7 @@ export class CustomerChatSocket implements OnModuleInit {
                 discordChannelId: client.discordChannelId,
                 time: String(Date.now()),
                 userId: client.user.id,
-                adminId: "46157d2e-d3ad-4238-b73a-82e655593320" // tạm thời fix cứng
+                adminId: "e3cb7bb7-5f80-4ded-b82b-a07ea43a65b0" // tạm thời fix cứng
             }
             let listChatHistory = await this.customerChatService.createChat(chat);
             if (listChatHistory) {
