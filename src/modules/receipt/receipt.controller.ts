@@ -23,9 +23,16 @@ export class ReceiptController {
     }
   }
 
+
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.receiptService.findOne(+id);
+  async findOne(@Param('id') id: string, @Res() res: Response) {
+    try {
+      let serviceRes = await this.receiptService.findOne(id)
+      // res.statusMessage = serviceRes.message
+      res.status(serviceRes.data ? HttpStatus.OK : HttpStatus.ACCEPTED).json(serviceRes)
+    } catch (err) {
+      throw new HttpException('loi controller', HttpStatus.BAD_REQUEST)
+    }
   }
 
   @Patch(':id')

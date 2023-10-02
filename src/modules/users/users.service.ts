@@ -11,7 +11,6 @@ import validation from 'src/utils/validation';
 export class UsersService {
   constructor(@InjectRepository(User) private users: Repository<User>) { }
 
-
   async register(createUserDto: CreateUserDto): Promise<RegisterSerRes> {
     try {
       let newUser = this.users.create(createUserDto);

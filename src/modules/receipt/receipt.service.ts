@@ -21,21 +21,17 @@ export class ReceiptService {
     try {
       let receipts = await this.receiptRepository.find({
         relations: {
-          user: {
-            receipts: {
-              detail: {
-                option: {
-                  product: {
-                    productOption: true
-                  }
-                }
+          detail: {
+            option: {
+              product: {
+                productOption: true
               }
             }
           }
         }
       })
       return {
-        message: "find categories success",
+        message: "find receipt success",
         data: receipts
       }
     } catch (err) {
@@ -43,8 +39,27 @@ export class ReceiptService {
     }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} receipt`;
+  async findOne(id: string) {
+    try {
+      let receiptDetail = await this.receiptRepository.findOne({
+        where: { id },
+        relations: {
+          detail: {
+            option: {
+              product: {
+                productOption: true
+              }
+            }
+          }
+        }
+      })
+      return {
+        message: "get product success",
+        data: receiptDetail
+      }
+    } catch (err) {
+      throw new HttpException('loi model', HttpStatus.BAD_REQUEST)
+    }
   }
 
   update(id: number, updateReceiptDto: UpdateReceiptDto) {

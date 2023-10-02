@@ -95,15 +95,23 @@ export class UserSocketGateway implements OnModuleInit {
                     userId: string
                 }) => {
                     console.log("data", data);
-
                     let cashInfor = await this.cash(data.receiptId, data.userId)
                     if (cashInfor) {
                         for (let i in this.clients) {
                             if (this.clients[i].user.id == user.id) {
                                 this.clients[i].socket.emit("receiveCash", cashInfor[0])
                                 this.clients[i].socket.emit("receiveReceipt", cashInfor[1])
+                                this.clients[i].socket.emit("cash-status", true)
                             }
                         }
+                    }
+                })
+
+
+                socket.on("deleteItemFromCart", async (newItem: { receiptId: string, optionId: string }) => {
+                    let cart = await this.deleteItemFromCart(newItem);
+                    if (cart) {
+                        socket.emit("receiveCart", cart)
                     }
                 })
             }
@@ -276,6 +284,39 @@ export class UserSocketGateway implements OnModuleInit {
 
         } catch (err) {
             return false
+        }
+    }
+
+    async deleteItemFromCart(newItem: { receiptId: string, optionId: string }) {
+        try {
+            const { receiptId, optionId } = newItem;
+
+            // Xóa mục từ giỏ hàng
+            await this.receiptDetail.delete({
+                receiptId,
+                optionId
+            });
+
+            // Lấy lại thông tin giỏ hàng sau khi xóa
+            let cart = await this.receipts.findOne({
+                where: {
+                    id: receiptId
+                },
+                relations: {
+                    detail: {
+                        option: {
+                            product: {
+                                productOption: true
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (!cart) return false;
+            return cart;
+        } catch (err) {
+            return false;
         }
     }
 }
