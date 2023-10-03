@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Res, HttpStatus, HttpException, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Res, HttpStatus, HttpException, Req, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { Response, Request } from 'express'
@@ -11,11 +11,43 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import common from 'src/utils/common';
 import { GoogleLoginDto } from './dto/google-login.dto';
 import axios from 'axios';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { uploadFileToStorage } from 'src/firebase';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService, private readonly mail: MailService, private readonly jwt: JwtService) { }
 
+  @Post("/updateAvatar")
+  @UseInterceptors(FileInterceptor('avatar'))
+  async updateAvatar(@Req() req: Request, @Body() body: any, @UploadedFile() file: Express.Multer.File, @Res() res: Response) {
+    try {
+      let userDecode = (this.jwt.verifyToken(String(req.headers.token)));
+      // console.log(" req.headers.token:", req.headers.token)
+      console.log(" userDecode:", userDecode)
+      let url = await uploadFileToStorage(file, "usersAvatar", file.buffer)
+      let result = await this.usersService.update(userDecode.id, {
+        avatar: url
+      })
+      if (result.status) {
+        return res.status(200).json({
+          token: this.jwt.createToken(result, "1d"),
+          data: result.data
+        })
+
+      } else {
+        return res.status(HttpStatus.BAD_REQUEST).json({
+          message: "Upload Faild!"
+        })
+      }
+    } catch (err) {
+      console.log("err", err);
+
+
+      throw new HttpException("controller err", HttpStatus.BAD_REQUEST)
+    }
+
+  }
 
   @Post('google-login')
   async googleLogin(@Body() googleLoginDto: GoogleLoginDto, @Req() req: Request, @Res() res: Response) {
