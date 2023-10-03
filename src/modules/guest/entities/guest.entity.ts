@@ -10,7 +10,7 @@ export class Guest {
     name: string;
 
     @Column()
-    numberPhone: string;
+    phoneNumber: string;
 
     @Column()
     email: string
